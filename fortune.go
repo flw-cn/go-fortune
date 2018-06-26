@@ -3,6 +3,7 @@ package fortune
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 )
@@ -44,10 +45,17 @@ func Draw(opts ...options) (string, error) {
 		args = append(args, fmt.Sprintf("%d%%", p), o.category)
 	}
 
-	fmt.Printf("args: %#v\n", args)
+	old := os.Getenv("PATH")
+	defer func() {
+		os.Setenv("PATH", old)
+	}()
+
+	os.Setenv("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/games:/usr/local/games")
 	cmd := exec.Command("fortune", args...)
+	cmd.Env = append(os.Environ(), "LANG=en_US.UTF8")
 	output, err := cmd.Output()
 	if err != nil {
+		fmt.Printf("ENV:\n%v\n", os.Environ())
 		return "", fmt.Errorf("os/exec: %s", err)
 	}
 
